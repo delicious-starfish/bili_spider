@@ -29,7 +29,7 @@ def write_json(data, filename):
 
 class Bilibili_Spider():
 
-    def __init__(self, url,  page_num, o, save_id, key_word,save_dir_json='json', save_by_page=False, t=1):
+    def __init__(self, url,  page_num, o, save_id, key_word=None,save_dir_json='json', save_by_page=False, t=1):
         self.t = t
         self.page_num = page_num
         self.o = o
@@ -70,6 +70,62 @@ class Bilibili_Spider():
         #     date_str = '{}-{:>02d}-{:>02d}'.format(date_item[0], int(date_item[1]), int(date_item[2]))
         return date_str
 
+    def authorMode_get_videos_by_author_pages(self,page_cnt):
+        page_url = self.user_url + f"/?tid=0&pn={page_cnt}&keyword=&order=pubdate"
+        print(page_url)
+        self.browser.get(page_url)
+        time.sleep(self.t + random.random())
+
+        html = BeautifulSoup(self.browser.page_source, features="html.parser")
+        ul_data = html.find_all('li', attrs = {"class":"small-item fakeDanmu-item"})
+        ul_data.extend(html.find_all('li', attrs = {"class":"small-item new fakeDanmu-item"}))
+        print(len(ul_data))
+        n = 0
+        ids = []
+        urls = []
+        titles = []
+        duration = []
+        categories = []
+        tags = []
+        plays = []
+        if len(ul_data) == 0:
+            print("ERROR")
+            # print(self.browser.page_source)
+            # return
+            return ids, urls, titles, duration, categories, tags, plays, 0.0
+
+        for ul in ul_data:
+            dur = ul.find('span', attrs = {"class":"length"})
+            dur = dur.text
+            dur = self.time_convert(dur)
+
+            title = ul.find('a', attrs = {"class":"title","target":"_blank"}).text
+
+            url = ul.find('a', attrs = {"class":"title","target":"_blank"})
+            url = "https:"+url.get("href")        # NOTE:  http -> https:
+
+            ids.append("BiliBili_"+url.split("/")[-2])
+            urls.append(url)
+            titles.append(title)
+            duration.append(dur)
+            categories.append(["作者"])
+            plays.append("null")
+            n += 1
+        print(n)
+        dur_all = sum(duration) / 3600
+        print(dur_all,"hours")
+        print(titles[0])
+        return ids, urls, titles,duration, categories, tags, plays, dur_all
+    def authorMode_get_max_author_pages(self):
+        html = BeautifulSoup(self.browser.page_source, features="html.parser")
+        max_page_num = html.find("span",attrs={"class":"be-pager-total"}).text
+        max_page_num = re.search(r'\d+', max_page_num).group()
+
+        return max_page_num
+
+    def authorMode_get_author(self):
+        html = BeautifulSoup(self.browser.page_source, features="html.parser")
+        return html.find('span',attrs = {"id":"h-name"}).text
 
     def get_videos_by_page(self, idx):
         # 获取第 page_idx 页的视频信息
@@ -124,7 +180,7 @@ class Bilibili_Spider():
             titles.append(tit)
             authors.append(au)
             duration.append(dur)
-            categories.append(["热点"])
+            categories.append(["关键词"])
             tags.append(tag_)
             plays.append("null")
             n += 1   
@@ -203,16 +259,20 @@ class Bilibili_Spider():
         categories_all = []
         tags_all = []
         play_all = []
-
+        author = "unknown"
         page_cnt = 1
         max_page = -1
         while True:
             if max_page != -1 and page_cnt > max_page:
                 break
-            page_url = self.user_url + f"?tid=0&pn={page_cnt}&keyword=&order=pubdate"
+
             print('>>>> page {}/{}'.format(page_cnt + 1, max_page if max_page != -1 else "unknown"))
 
-            ids, urls, titles, authors, duration, categories, tags, play, dur_all = self.get_videos_by_page(idx)
+            ids, urls, titles, duration, categories, tags, play, dur_all = self.authorMode_get_videos_by_author_pages(page_cnt)
+            if max_page == -1: max_page = self.authorMode_get_max_author_pages()
+            if author == 'unknown': author = self.authorMode_get_author()
+            print(max_page,author)
+            break
             sys.stdout.flush()
             page_cnt += 1
 
@@ -220,18 +280,25 @@ class Bilibili_Spider():
 def main():
     path = os.getcwd() + '\\视频数据'
     mkdir_if_missing(path)
-    key_words = ["量子力学","德国宗教改革","鸵鸟政策","萨卡特卡斯州","药学专题","CAKE~zhwiki"]
-    for key_word in key_words:
+    # key_words = ["量子力学","德国宗教改革","鸵鸟政策","萨卡特卡斯州","药学专题","CAKE~zhwiki"]
+    # for key_word in key_words:
+    #
+    #     #每次运行需要更改的参数
+    #     url = f"https://search.bilibili.com/all?keyword={key_word}&search_source=5&duration=4"
+    #     page_num = 40
+    #     o = 36          #点第二页或者第三页会发现url上的o成倍数增长，在这里给1倍的o
+    #     save_id = 3     #每次运行手动加1
+    #     bilibili_spider = Bilibili_Spider(url, page_num, o, save_id,save_dir_json=path,key_word = key_word)
+    #     bilibili_spider.get_by_keyWords()
 
-        #每次运行需要更改的参数
-        url = f"https://search.bilibili.com/all?keyword={key_word}&search_source=5&duration=4"
+    authors = ["680447"]
+    for author in authors:
+        url = f"https://space.bilibili.com/{author}/video"
         page_num = 40
-        o = 36          #点第二页或者第三页会发现url上的o成倍数增长，在这里给1倍的o
-        save_id = 3     #每次运行手动加1
-        bilibili_spider = Bilibili_Spider(url, page_num, o, save_id,save_dir_json=path,key_word = key_word)
-        bilibili_spider.get_by_keyWords()
-
-
+        o = 36
+        save_id = 3
+        bilibili_spider = Bilibili_Spider(url, page_num, o, save_id, save_dir_json=path)
+        bilibili_spider.get_by_authors()
 
 if __name__ == '__main__':
     main()

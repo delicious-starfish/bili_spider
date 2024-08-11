@@ -1,6 +1,9 @@
 ## 功能介绍
-1.提供关键词，并且根据关键词在BILIBILI搜索视频，并获得视频的元数据<p>
-2.将视频元数据保存为{关键词}.json<p>
+
+<p><font color="BlueGreen">1.提供关键词，并且根据关键词在BILIBILI搜索视频，并获得视频的元数据</font></p>
+<p><font color="BlueGreen">2.将视频元数据保存为{关键词}.json</font></p>
+<p><font color="BlueGreen">3.同时也可以提供作者id,并且获得视频元数据</font></p>
+<p><font color="BlueGreen">4.使用作者id爬取时,元数据将保存为<strong>{作者姓名}</strong>.json</font></p>
 
 ## 元数据
 视频元数据保存为以下格式
@@ -14,6 +17,7 @@
         "duration": 5096,
         "categories": [
             "\u70ed\u70b9"
+            (理论上来说应当是"热点","关键词","作者"中任选一)
         ],
         "tags": [
             "ASMR",
@@ -22,4 +26,9 @@
         "view_count": "null"
 },
 ```
-
+## TODO
+<p><font color=YellowGreen>1.修改类的定义，在使用关键词搜索时无须传入关键词</font></p>
+<p><font color=YellowGreen>2.能够流畅执行按作者爬取</font></p>
+<p><font color=YellowGreen>3.时长过滤模块放在下载脚本部分</font></p>
+<p><font color=YellowGreen>4.能够在热点视频上按关键词爬取</font></p>
+<p><font color=YellowGreen>5.在关键词搜索时过滤掉小up</font></p>
