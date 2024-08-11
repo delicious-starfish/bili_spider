@@ -43,6 +43,8 @@ class Bilibili_Spider():
         self.key_word = key_word
         print('spider init done.')
 
+
+
     def close(self):
         # 关闭浏览器驱动
         self.browser.quit()
@@ -132,6 +134,7 @@ class Bilibili_Spider():
         print(titles[0])
         return ids, urls, titles, authors, duration, categories, tags, plays, dur_all
 
+
     def save(self, json_path, ids, urls, titles, authors, duration, categories, tags, play):
         data_list = []
         for i in range(len(urls)):
@@ -152,7 +155,7 @@ class Bilibili_Spider():
         write_json(data_list, json_path)
         print('dump json file done. total {} urls. \n'.format(len(urls)))
 
-    def get(self):
+    def get_by_keyWords(self):
         # 获取该 up 主的所有基础视频信息
         print('Start ... \n')
         print('Pages Num {}'.format(self.page_num))
@@ -187,6 +190,32 @@ class Bilibili_Spider():
         print("Result:", sum(duration_all) / 3600 , "hours")
         self.save(json_path, ids_all, urls_all, titles_all, authors_all, duration_all, categories_all, tags_all, play_all)
 
+    def get_by_authors(self):
+        if "search" in self.user_url:
+            print("链接提供错误，请提供用户页面")
+            return
+
+        ids_all = []
+        urls_all = []
+        titles_all = []
+        authors_all = []
+        duration_all = []
+        categories_all = []
+        tags_all = []
+        play_all = []
+
+        page_cnt = 1
+        max_page = -1
+        while True:
+            if max_page != -1 and page_cnt > max_page:
+                break
+            page_url = self.user_url + f"?tid=0&pn={page_cnt}&keyword=&order=pubdate"
+            print('>>>> page {}/{}'.format(page_cnt + 1, max_page if max_page != -1 else "unknown"))
+
+            ids, urls, titles, authors, duration, categories, tags, play, dur_all = self.get_videos_by_page(idx)
+            sys.stdout.flush()
+            page_cnt += 1
+
 
 def main():
     path = os.getcwd() + '\\视频数据'
@@ -200,7 +229,7 @@ def main():
         o = 36          #点第二页或者第三页会发现url上的o成倍数增长，在这里给1倍的o
         save_id = 3     #每次运行手动加1
         bilibili_spider = Bilibili_Spider(url, page_num, o, save_id,save_dir_json=path,key_word = key_word)
-        bilibili_spider.get()
+        bilibili_spider.get_by_keyWords()
 
 
 
