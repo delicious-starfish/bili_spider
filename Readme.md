@@ -27,8 +27,11 @@
 },
 ```
 ## TODO
-<p><font color=YellowGreen>1.修改类的定义，在使用关键词搜索时无须传入关键词</font></p>
-<p><font color=YellowGreen>2.能够流畅执行按作者爬取</font></p>
-<p><font color=YellowGreen>3.时长过滤模块放在下载脚本部分</font></p>
-<p><font color=YellowGreen>4.能够在热点视频上按关键词爬取</font></p>
-<p><font color=YellowGreen>5.在关键词搜索时过滤掉小up</font></p>
+- [x] <font color=YellowGreen>修改类的定义，在使用关键词搜索时无须传入关键词</font>
+- [x] <font color=YellowGreen>能够流畅执行按作者爬取</font>
+- [ ] <font color=YellowGreen>测试下载脚本对于按作者爬取的适配</font>
+- [ ] <font color=YellowGreen>为tag过滤做准备</font>
+- [ ] <font color=YellowGreen>避免重复爬取作者</font>  
+- [ ] <font color=YellowGreen>时长过滤模块放在下载脚本部分</font>
+- [ ] <font color=YellowGreen>能够在热点视频上按关键词爬取</font>
+- [ ] <font color=YellowGreen>在关键词搜索时过滤掉小up</font>

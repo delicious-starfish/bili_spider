@@ -21,8 +21,8 @@ def mkdir_if_missing(dir):
 
 def write_json(data, filename):
     try:
-        with open(filename, 'w') as json_file:
-            json.dump(data, json_file, indent=4)
+        with open(filename, 'w', encoding="utf-8") as json_file:
+            json_file.write(json.dumps(data,ensure_ascii=False,indent=4))
         print(f"Data successfully saved to {filename}.")
     except (IOError, TypeError) as e:
         print(f"An error occurred while saving to {filename}: {e}")
@@ -86,13 +86,12 @@ class Bilibili_Spider():
         titles = []
         duration = []
         categories = []
-        tags = []
         plays = []
         if len(ul_data) == 0:
             print("ERROR")
             # print(self.browser.page_source)
             # return
-            return ids, urls, titles, duration, categories, tags, plays, 0.0
+            return ids, urls, titles, duration, categories, plays, 0.0
 
         for ul in ul_data:
             dur = ul.find('span', attrs = {"class":"length"})
@@ -115,13 +114,13 @@ class Bilibili_Spider():
         dur_all = sum(duration) / 3600
         print(dur_all,"hours")
         print(titles[0])
-        return ids, urls, titles,duration, categories, tags, plays, dur_all
+        return ids, urls, titles,duration, categories, plays, dur_all
     def authorMode_get_max_author_pages(self):
         html = BeautifulSoup(self.browser.page_source, features="html.parser")
         max_page_num = html.find("span",attrs={"class":"be-pager-total"}).text
         max_page_num = re.search(r'\d+', max_page_num).group()
 
-        return max_page_num
+        return int(max_page_num)
 
     def authorMode_get_author(self):
         html = BeautifulSoup(self.browser.page_source, features="html.parser")
@@ -201,7 +200,7 @@ class Bilibili_Spider():
             result['author'] = authors[i]
             result['duration'] = duration[i]
             result['categories'] = categories[i]
-            result['tags'] = tags[i]
+            result['tags'] = tags[i] if tags else "null"
             result["view_count"] = play[i]
             data_list.append(result)
         
@@ -224,7 +223,8 @@ class Bilibili_Spider():
         categories_all = []
         tags_all = []
         play_all = []
-
+        self.key_word = self.user_url.split("/")[3]
+        self.key_word = re.search("keyword=(.*?)&search_source=5",self.key_word).group(1)
         for idx in range(self.page_num):
             print('>>>> page {}/{}'.format(idx+1, self.page_num))
             ids, urls, titles, authors, duration, categories, tags, play, dur_all = self.get_videos_by_page(idx)
@@ -241,7 +241,7 @@ class Bilibili_Spider():
                     tags_all.append(tags[i])
                     play_all.append(play[i])
 
-        json_path = osp.join(self.save_dir_json, '{}_{}'.format("bilibili", "热点"), str(self.key_word)+'.json')
+        json_path = osp.join(self.save_dir_json, '{}_{}'.format("bilibili", "关键词"), str(self.key_word)+'.json')
         print("Result:", len(urls_all))
         print("Result:", sum(duration_all) / 3600 , "hours")
         self.save(json_path, ids_all, urls_all, titles_all, authors_all, duration_all, categories_all, tags_all, play_all)
@@ -268,17 +268,30 @@ class Bilibili_Spider():
 
             print('>>>> page {}/{}'.format(page_cnt + 1, max_page if max_page != -1 else "unknown"))
 
-            ids, urls, titles, duration, categories, tags, play, dur_all = self.authorMode_get_videos_by_author_pages(page_cnt)
+            ids, urls, titles, duration, categories, play, dur_all = self.authorMode_get_videos_by_author_pages(page_cnt)
             if max_page == -1: max_page = self.authorMode_get_max_author_pages()
             if author == 'unknown': author = self.authorMode_get_author()
-            print(max_page,author)
-            break
-            sys.stdout.flush()
             page_cnt += 1
 
+            for i in range(len(urls)):
+                if urls[i] not in urls_all:
+                    ids_all.append(ids[i])
+                    urls_all.append(urls[i])
+                    titles_all.append(titles[i])
+                    authors_all.append(author)
+                    duration_all.append(duration[i])
+                    categories_all.append(categories[i])
+                    tags_all.append(None)
+                    play_all.append(play[i])
+
+        json_path = osp.join(self.save_dir_json, '{}_{}'.format("bilibili", "作者"), str(author) + '.json')
+        print("Result:", len(urls_all))
+        print("Result:", sum(duration_all) / 3600, "hours")
+        self.save(json_path, ids_all, urls_all, titles_all, authors_all, duration_all, categories_all, tags_all,
+                      play_all)
 
 def main():
-    path = os.getcwd() + '\\视频数据'
+    path = osp.dirname(os.getcwd()) + '\\视频数据'
     mkdir_if_missing(path)
     # key_words = ["量子力学","德国宗教改革","鸵鸟政策","萨卡特卡斯州","药学专题","CAKE~zhwiki"]
     # for key_word in key_words:
@@ -288,7 +301,7 @@ def main():
     #     page_num = 40
     #     o = 36          #点第二页或者第三页会发现url上的o成倍数增长，在这里给1倍的o
     #     save_id = 3     #每次运行手动加1
-    #     bilibili_spider = Bilibili_Spider(url, page_num, o, save_id,save_dir_json=path,key_word = key_word)
+    #     bilibili_spider = Bilibili_Spider(url, page_num, o, save_id,save_dir_json=path)
     #     bilibili_spider.get_by_keyWords()
 
     authors = ["680447"]
