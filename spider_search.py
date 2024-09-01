@@ -7,12 +7,15 @@ import time
 import argparse
 import datetime
 from selenium import webdriver
+from selenium.webdriver.common.proxy import Proxy, ProxyType
 from bs4 import BeautifulSoup
 from urllib import parse as url_parse
 import random
 from tqdm import tqdm
 import json
 
+
+from xpinyin import Pinyin
 
 def mkdir_if_missing(dir):
 
@@ -37,7 +40,13 @@ class Bilibili_Spider():
         self.user_url = url
         self.save_dir_json = save_dir_json
         self.save_by_page = save_by_page
+        proxy = Proxy()
+        proxy.proxy_type = ProxyType.MANUAL
+        proxy.http_proxy = "127.0.0.1:33210"
+        proxy.ssl_proxy = "127.0.0.1:33210"
+
         options = webdriver.FirefoxOptions()
+        options.add_argument('--proxy-server=http://{}:{}'.format("127.0.0.1", "33210"))
         options.add_argument('--headless')
         self.browser = webdriver.Firefox(options=options)
         self.key_word = key_word
@@ -240,8 +249,9 @@ class Bilibili_Spider():
                     categories_all.append(categories[i])
                     tags_all.append(tags[i])
                     play_all.append(play[i])
-
-        json_path = osp.join(self.save_dir_json, '{}_{}'.format("bilibili", "关键词"), str(self.key_word)+'.json')
+        p = Pinyin()
+        key = p.get_pinyin(self.key_word)
+        json_path = osp.join(self.save_dir_json, '{}_{}'.format("bilibili", "关键词"), str(key)+'.json')
         print("Result:", len(urls_all))
         print("Result:", sum(duration_all) / 3600 , "hours")
         self.save(json_path, ids_all, urls_all, titles_all, authors_all, duration_all, categories_all, tags_all, play_all)
@@ -283,7 +293,8 @@ class Bilibili_Spider():
                     categories_all.append(categories[i])
                     tags_all.append(None)
                     play_all.append(play[i])
-
+        p = Pinyin()
+        author = p.get_pinyin(author)
         json_path = osp.join(self.save_dir_json, '{}_{}'.format("bilibili", "作者"), str(author) + '.json')
         print("Result:", len(urls_all))
         print("Result:", sum(duration_all) / 3600, "hours")
@@ -293,25 +304,27 @@ class Bilibili_Spider():
 def main():
     path = osp.dirname(os.getcwd()) + '\\视频数据'
     mkdir_if_missing(path)
-    # key_words = ["量子力学","德国宗教改革","鸵鸟政策","萨卡特卡斯州","药学专题","CAKE~zhwiki"]
-    # for key_word in key_words:
-    #
-    #     #每次运行需要更改的参数
-    #     url = f"https://search.bilibili.com/all?keyword={key_word}&search_source=5&duration=4"
-    #     page_num = 40
-    #     o = 36          #点第二页或者第三页会发现url上的o成倍数增长，在这里给1倍的o
-    #     save_id = 3     #每次运行手动加1
-    #     bilibili_spider = Bilibili_Spider(url, page_num, o, save_id,save_dir_json=path)
-    #     bilibili_spider.get_by_keyWords()
+    key_words = ["新番","美食","nasa","流浪地球","哈勃望远镜","中国天眼","这就是中国"]
+    for key_word in key_words:
 
-    authors = ["680447"]
-    for author in authors:
-        url = f"https://space.bilibili.com/{author}/video"
+        #每次运行需要更改的参数
+        url = f"https://search.bilibili.com/all?keyword={key_word}&search_source=5&duration=4"
         page_num = 40
-        o = 36
-        save_id = 3
-        bilibili_spider = Bilibili_Spider(url, page_num, o, save_id, save_dir_json=path)
-        bilibili_spider.get_by_authors()
+        o = 36          #点第二页或者第三页会发现url上的o成倍数增长，在这里给1倍的o
+        save_id = 3     #每次运行手动加1
+        bilibili_spider = Bilibili_Spider(url, page_num, o, save_id,save_dir_json=path)
+        bilibili_spider.get_by_keyWords()
+
+    # authors = ["8096990","113362335","297882491","508416316","25503580","297786973","337312411","888465","7481602"]
+    # for author in authors:
+    #     url = f"https://space.bilibili.com/{author}/video"
+    #     page_num = 40
+    #     o = 36
+    #     save_id = 3
+    #     bilibili_spider = Bilibili_Spider(url, page_num, o, save_id, save_dir_json=path)
+    #     bilibili_spider.get_by_authors()
+
+
 
 if __name__ == '__main__':
     main()
